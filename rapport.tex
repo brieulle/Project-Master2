@@ -1,0 +1,348 @@
+\documentclass[a4paper]{article} % papier A4
+\usepackage[utf8]{inputenc}      % accents dans le source
+\usepackage[T1]{fontenc}         % accents dans le pdf
+\usepackage{textcomp}            % symboles complémentaires (euro)
+\usepackage[frenchb]{babel}      % titres en français
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{hyperref}
+\usepackage{enumerate}
+\usepackage{multicol}
+\numberwithin{equation}{section}
+\begin{document}
+\title{Factorisation de grands entiers via les fractions continues}
+\author{Ludovic Brieulle}
+\newtheorem{thm}{Thèorème}[section]
+\newtheorem{lem}[thm]{Lemme}
+\newtheorem{cor}{Corollaire}
+\newtheorem{prop}[thm]{Proposition}
+\theoremstyle{definition}
+\newtheorem{defn}[thm]{Définition}
+\newtheorem*{ex}{Exemple}
+\theoremstyle{remark}
+\newtheorem*{rem}{Remarque}
+\titlepage
+\maketitle
+\newpage
+\tableofcontents
+\newpage
+\clearpage
+\addcontentsline{toc}{section}{Introduction}
+\section*{Introduction}
+Le théorème fondamentale de l'arithmétique assure que tout entier se décompose de façon unique en produit de nombres premiers. Si l'existence de ces facteurs est démontrée, les trouver est un tout autre problème. Plusieurs systèmes cryptographiques se base alors sur la difficulté à factoriser des grands entiers, c'est le cas du système RSA qui se base sur un entier $N = pq$ où est $p$ et $q$ sont des nombres premiers impairs.\par
+Une méthode pour factoriser un entier, dûe à Fermat, est basée sur le fait que tout entier impair s'écrit comme la différence de deux carrés, i.e. $N = x^2 - y^2$. Dans ce cas, si $(x - y) \neq1$ ou $(x + y) \neq1$ alors on obtient un facteur non triviale. La difficulté réside alors dans le fait de trouver les "bons" carrés. C'est en utilisant le développement en fraction continue de $\sqrt{kN}$  qu'on parviendra à trouver de bons candidats pour la factorisation de $N$.
+\newpage
+\section{Contexte théorique}
+Dans cette partie nous allons énoncer et éventuellement démontrer les résultats théoriques nous permettant d'appliquer notre méthode de factorisation. 
+\subsection{Définitions et notations}
+\subsubsection{Fractions continues}
+Dans tout ce qui suit $N$ désignera l'entier à factoriser et $k$ désignera un entier quelconque dont le rôle sera précisé plus tard.\\\par
+\begin{defn}
+On appelle fraction continue une expression de la forme :
+\[q_0 + \dfrac{b_1}{q_1 + \dfrac{b_2}{q_2 + \dfrac{b_3}{q_3 + \dots }}}\]
+où les $q_i$ et $b_i$ sont rationnels, réels ou complexes. Dans le cadre de ce rapport, nous nous contenterons de considérer le cas $b_i = 1$. On parle alors de fraction continue simple et on notera :
+\[[q_0, q_1, q_2, q_3, \dots] = q_0 + \dfrac{1}{q_1 + \dfrac{1}{q_2 + \dfrac{1}{q_3 + \dots }}} \]
+On appelle les $q_i$ les quotients de la fraction continue.\\
+\end{defn}
+Prenons alors un $x\in\mathbb{R}$. Si $x = \lfloor{x}\rfloor$ alors $x$ est rationnel. Sinon, on écrit :
+\begin{align*}
+x &= \lfloor{x}\rfloor + x - \lfloor{x}\rfloor\\
+&=\lfloor{x}\rfloor + \dfrac{1}{\dfrac{1}{x - \lfloor{x}\rfloor}}
+\end{align*}
+En posant $x_1 = 1/x - \lfloor{x}\rfloor$, on vérifie si $x_1 = \lfloor{x_1}\rfloor$. Si c'est le cas, $x$ est rationnel, sinon on pose $x_2 = 1/x_1 - \lfloor{x_1}\rfloor$ et on écrit :
+\[x = \lfloor{x}\rfloor + \dfrac{1}{\lfloor{x_1}\rfloor + \dfrac{1}{x_2}}\]
+Ce procéder s'appelle le développement en fraction continue. En particulier, il s'arrête s'il existe un $x_n = \lfloor{x_n}\rfloor$; dans ce cas $x$ est rationnel. Sinon, le développement continue indéfiniment.\\\par
+\begin{defn}
+On appelle réduites d'une fraction continue, les éléments de la forme : 
+\[\dfrac{A_n}{B_n} = [q_0, q_1,\dots, q_n] = q_0 + \dfrac{1}{q_1 + \dfrac{1}{q_2 + \dfrac{1}{\dots+\dfrac{1}{q_n}}}}\]
+\end{defn}
+\begin{defn}
+On dit qu'une fraction continue est périodique si elle est de la forme $[q_0,\dots,q_n,q_0,\dots]$.
+\end{defn}
+%\begin{defn}
+%On appelle quotients complets les éléments :
+%\begin{align*}
+%&x_0 = [q_0, q_{1},...]\\
+%&\vdots\\
+%&x_n = [q_n, q_{n+1},...]
+%\end{align*}
+%\end{defn}
+\subsubsection{Irrationnels quadratiques}
+\begin{defn}
+On dit qu'un nombre réel $\alpha$ est un irrationnel quadratique s'il est irrationnel et racine d'un polynôme de degré $2$ sur $\mathbb{Z}$.
+\end{defn}
+\begin{rem}
+Si on pose $f = aX^2 + bX + c$, avec $a, b, c \in\mathbb{Z}$, le polynôme annulant $\alpha$ alors on peut écrire :
+\begin{equation}
+\label{eqIrra}
+\alpha = \dfrac{{P} + \sqrt{D}}{Q}
+\end{equation}
+avec $P,Q\in\mathbb{Z}$ et $D$ le déterminant du polynôme. Cette forme sera utile pour l'expression de la fraction continue de $\sqrt{kN}$ et l'algorithme de factorisation en général.
+\end{rem}
+\begin{defn}
+Soit $\alpha$ un irrationnel quadratique et $\overline{\alpha}$ son conjugé. On dit que $\alpha$ est réduit si :
+\item 1) $\alpha > 1$,
+\item 2) $-1 < \overline{\alpha} < 0$.
+\end{defn}
+\subsection{Résultats généraux}
+\begin{prop}
+\label{deuxpointscinq}
+Soit $A_n/B_n$ la $n^{\textit{ième}}$ réduite et $q_n$ est le $n^{\textit{ième}}$ quotient de la fraction continue d'un irrationnel quadratique. Alors on a :
+\begin{align*}
+&A_n = q_nA_{n-1} + A_{n-2}\\
+&B_n = q_nB_{n-1} + B_{n-2}
+\end{align*}
+avec $A_{-2} = 0$, $A_{-1} = 1$, $B_{-2} = 1$ et $B_{-1} = 0$.
+\end{prop}
+\begin{proof}
+Tout d'abord, pour $n = 0$ on a :
+\[\dfrac{A_0}{B_0}=\dfrac{q_0}{1}=\dfrac{q_0.1+0}{q_0.0+1}\]
+et pour $n = 1$ :
+\[\dfrac{A_1}{b_1} = q_0 + \dfrac{1}{q_1} = \dfrac{q_1q_0 + 1}{q_1.1 + 0}\]
+ce qui est donne le bon résultat puisque $A_0 = q_0$ et $B_0 = 1$ par définition.\par
+Supposons que le résultat soit vraie jusqu'à un $n>1$. On a alors :
+\[C_{n+1}=\dfrac{A_{n+1}}{B_{n+1}}=[q_0,\dots,q_n,q_{n+1}]\]
+qui est égale à $[q_0,\dots,q_{n-1}, q'_n]$ en posant $q'_n=q_n + \dfrac{1}{q_{n+1}}$, i.e. $C_{n+1}=A'_n/B'_n$. D'où, avec l'hypothèse de récurrence :
+\begin{align*}
+C_{n+1}&=\dfrac{(q_n+\frac{1}{q_{n+1}})A_{n-1}+A_{n-2}}{(q_n+\frac{1}{q_{n+1}})B_{n-1}+B_{n-2}}\\
+&=\dfrac{q_nA_{n-1}+A_{n-2}+\frac{q_{n-1}}{q_{n+1}}}{q_nB_{n-1}+B_{n-2}+\frac{B_{n-1}}{q_{n+1}}}\\
+&=\dfrac{A_n + \frac{A_{n-1}}{q_{n+1}}}{B_n + \frac{B_{n-1}}{q_{n+1}}}\\
+&=\dfrac{q_{n+1}A_n + A_{n-1}}{q_{n+1}B_n + B_{n-1}}
+\end{align*}
+ce qu'il fallait démontrer.\\
+\end{proof}
+\begin{prop}
+\label{moinsunn}
+Soit $A_n$ et $B_n$, respectivement numérateur et dénominateur de la $n^{\textit{ième}}$ réduite. Alors on a la relation :
+\[A_{n-1}B_n - A_nB_{n-1} = (-1)^n\]
+En particulier, $A_{n-1}$ et $B_{n-1}$ sont premiers entre eux.
+\end{prop}
+\begin{proof}
+D'après la proposition précedente, on peut écrire : 
+\begin{align*}
+A_{n-1}B_n-A_nB_{n-1}&=A_{n-1}(q_nB_{n-1} + B_{n-2}) - (q_nA_{n-1} + A_{n-2})B_{n-1}\\
+&=A_{n-1}B_{n-2} - B_{n-1}A_{n-2}\\
+&=(-1)(A_{n-2}B_{n-1} - B_{n-2}A_{n-1})
+\end{align*}
+En répétant le procédé (n+1)-fois, on arrive finalement à :
+\[(-1)^{n+1}(A_{-2}B_{-1} - B_{-2}A_{-1}) = (-1)^{n+1}(0.0 - 1.1) = (-1)^{n+2} = (-1)^n\]
+encore une fois grâce à la proposition précédente.	Comme on a $A_{-1}B_{-2} - A_{-2}B_{-2} = -1$ on en déduit qu'ils sont premiers entre eux; une simple récurrence permet de conclure pour $n\geq0$.\\
+\end{proof}
+\begin{prop}
+\label{autrIrra}
+Soit $\alpha$ un irrationnel quadratique et $q$ un entier. Alors :
+\begin{enumerate}[(a)]
+\item $1/\alpha$ est un irrationnel quadratique.
+\item $\alpha+q$ est un irrationnel quadratique.
+\end{enumerate}
+\end{prop}
+\begin{proof}
+Montrons qu'il s'agit de deux irrationnels. Si $1/\alpha = a/b$ avec $a, b\in\mathbb{Z}$ alors $\alpha = b/a$, ce qui est impossible; de même, si $\alpha + q$ était rationnel, alors on pourrait écrire $\alpha = (a - qb)/b$, absurde.\par
+Si $f = aX^2 + bX + c$ est le polynôme annulateur de $\alpha$ alors les polynômes annulateurs de $1/\alpha$ et $\alpha + q$ sont respectivement $f(1/X)$ et $f(X - q)$.\\
+\end{proof}
+\begin{rem}
+La proposition ci-dessus montre que si $\alpha$ est un irrationnel de la forme :
+\[\alpha = \lfloor\alpha\rfloor + \frac{1}{\alpha_1}\]
+alors $\alpha_1$ est aussi un irrationnel quadratique. Autrement dit, tous les quotients de la fraction continue d'un irrationnel quadratique est de la forme de l'équation \ref{eqIrra}.
+\end{rem}
+\begin{prop}
+\label{formIrra}
+Si $\alpha$ est un irrationnel quadratique réduit et que $\alpha = q_0 + 1/\alpha_1$, où $q_0 = \lfloor\alpha\rfloor$, alors $\alpha_1$ est aussi réduit.
+\end{prop}
+\begin{proof}
+$\alpha_1$ est bien un irrationnel quadratique d'après la proposition ci-dessus. Il reste à montrer qu'il est réduit, mais :
+\[\alpha_1 = \dfrac{1}{\alpha - q_0} > 1\]
+puisque la différence entre un réel et sa partie entière est toujours plus petite que un.
+\begin{lem}
+\label{lemIrra}
+Soit $\alpha$ un irrationnel quadratique réduit. Alors $\alpha - \overline{\alpha} > 2$.
+\end{lem}
+\begin{proof}
+En effet, si $\alpha$ est réduit alors on a $-1 <\overline{\alpha} < 0$ et $\alpha > 1$, donc $\alpha - \overline{\alpha} > 1 - (-1) = 2$.\\
+\end{proof}
+Ainsi, comme $\alpha - \overline{\alpha} > 2$, d'après le lemme, et $1 > \alpha - q_0 > 0$, on a :
+\[-1 > \overline{\alpha} - q_0\]
+D'où finalement $ -1 < \overline{\alpha_1} < 0$, ce qui montre bien $\alpha_1$ est aussi réduit.\\
+\end{proof}
+\begin{prop}
+\label{borneQ}
+Soit $\alpha$ un irrationnel quadratique réduit, si on écrit $\alpha = (P + \sqrt{D})/Q$ alors on a $0 < P < \sqrt{D}$ et $0 < Q < 2\sqrt{D}$.
+\end{prop}
+\begin{proof}
+Par définition, on a $\overline{\alpha} = (P - \sqrt{D})/Q$, alors :
+\[\alpha - \overline{\alpha} = \dfrac{2\sqrt{D}}{Q}\]
+On a donc $Q(\alpha - \overline{\alpha}) = 2\sqrt{D} > 2$; d'après le lemme \ref{lemIrra}, $\alpha - \overline{\alpha} > 0$, donc $Q > 0$; on en déduit dans la foulée que $Q < 2\sqrt{D}$ puisque $2 > 1$. Comme $\alpha$ est réduit, on a $\alpha + \overline{\alpha} = 2P/Q > 1 - 1 = 0$ comme $Q$ est déjà positif, alors $P$ l'est aussi. De même, $\overline{\alpha}$ est négatif, donc $P < \sqrt{D}$.\\
+\end{proof}
+On admettra le théorème suivant :
+\begin{thm}[Galois]
+\label{Galois}
+Soit $\alpha\in\mathbb{R}$, alors $\alpha$ admet un développement en fraction continue périodique si et seulement si $\alpha$ un irrationnel quadratique.
+\end{thm}
+Pour lire la preuve, rendez-vous sur \cite[p. 13]{CF}.
+\subsection{Résultats sur $\sqrt{N}$}
+\begin{prop}
+Soit $N$ un entier sans facteur carré, alors $\sqrt{N} + q_0$ est irrationnel quadratique réduit pour $q_0 = \lfloor\sqrt{N}\rfloor$.
+\end{prop}
+\begin{proof}
+$\sqrt{N}$ est irrationnel et racine du polynôme $X^2 - N$. Comme $\sqrt{N} > 0$ alors $\sqrt{N} + q_0 > 0$. D'après la preuve du lemme \ref{lemIrra}, on a $1 > \sqrt(N) - q_0 > 0$, d'où $-1 < q_0 - \sqrt{N} < 0$.\\
+\end{proof}
+\begin{thm}
+\label{ncycl}
+Soit $N$ un entier qui n'est pas un carré, alors on a pour $n > 0$ entier :
+\[\sqrt{N} = q_0 + \dfrac{1}{q_1 + \dfrac{1}{\dots + \dfrac{1}{q_n + \dfrac{1}{ 2q_0 + \dfrac{1}{q_1 + \dfrac{1}{\dots}}}}}}\]
+\end{thm}
+\begin{proof}
+Posons $q_0 = \lfloor\sqrt{kN}\rfloor$. On sait que $q_0 + \sqrt{kN}$ est irrationnel quadratique d'après la proposition ci-dessus. Alors d'après le théorème \ref{Galois}, on a $\sqrt{kN} + q_0 = [2q_0,q_1,\dots,2q_0,q_1,\dots]$. On a donc bien $\sqrt{kN} = \sqrt{kN} + q_0 - q_0 = [q_0,q_1,\dots,2q_0,\dots]$.\\
+\end{proof}
+\begin{cor}
+Les $q_n$ sont des irrationnels quadratiques réduits et de la forme $q_n = (P_n + \sqrt{N})/Q_n$ avec $0 < Q_n < 2\sqrt{N}$ et $0 < P_n < \sqrt{N}$.
+\end{cor}
+\begin{proof}
+Dans la preuve du théorème ci-dessus, on expose comme $q_0 + \sqrt{N}$ est un irrationnel quadratique, alors d'après le théorème \ref{Galois} son développement en fraction continue est périodique. On en déduit alors que $q_0 + \sqrt{N} = [2q_0, a_1,\dots, q_n,2q_0,\dots]$. Ainsi, tous les $q_i$ sont des irrationnels quadratiques réduits d'après la proposition \ref{formIrra}. S'en suit les autres résultats d'après la proposition \ref{borneQ} et la remarque de la proposition \ref{autrIrra}.\\
+\end{proof}
+\begin{rem}
+Si $kN$ est sans facteur carré alors tous les résultats sont encore valable pour son développement en fraction continue. Si jamais $k$ a des facteurs carré, il suffit de le remplace par $k'$ égal à $k$ débarassé de ses facteurs carrées.
+\end{rem}
+\section{Algorithme de factorisation}
+\subsection{Principe}
+La base de l'idée repose essentiellement sur la proposition suivante.
+\begin{prop}
+Soit $A_{n-1}/B_{n-1}$ la $(n-1)^{\textit{ième}}$ réduite de le fraction continue (simple) de $kN$ et $Q_n$ le dénominateur du $n^{\textit{ième}}$ quotient complet. Alors on a :
+\begin{equation}\label{eqalg}A_{n-1}^2 - kNB_{n-1}^2 = (-1)^nQ_n\end{equation}
+\end{prop}
+\begin{proof}
+Développons $\sqrt{kN}$ en fraction continue jusqu'au rang $n$, alors on a :
+\[\sqrt{kN}=q_0+\dfrac{1}{q_1 + \dfrac{1}{\dots + \dfrac{1}{q_{n-1} + \dfrac{1}{q_n}}}} = \dfrac{A_n}{B_n}\]
+Ainsi, d'après la proposition \ref{deuxpointscinq}, on a :
+\[\sqrt{kN} = \dfrac{q_nA_{n-1} + A_{n-2}}{q_nB_{n-1} + B_{n-2}}\]
+En multipliant par le dénominateur et en prenant compte du corollaire 1 du théorème \ref{ncycl}, on arrive à l'égalité :
+\[\sqrt{kN}(\tfrac{P_n}{Q_n}B_{n-1} + B_{n-2}) + \tfrac{kN}{Q_n}B_{n-1} = \tfrac{\sqrt{kN}}{Q_n}A_{n-1} + \tfrac{P_n}{Q_n}A_{n-1} + A_{n-2}\]
+Alors par identification, on obtient les deux égalités suivantes :
+\begin{align*}
+A_{n-1} &=\tfrac{kN}{Q_n}B_{n-1} - \tfrac{P_n}{Q_n}A_{n-1}\\
+B_{n-1} &=\tfrac{1}{Q_n}A_{n-1} - \tfrac{P_n}{Q_n}B_{n-1}
+\end{align*}
+On utilise alors la proposition \ref{moinsunn}, ce qui nous donne en remplaçant par les équations ci-dessus :
+\begin{align*}
+A_{n-2}B_{n-1}-A_{n-1}B_{n-2}&=(\tfrac{kN}{Q_n}B_{n-1}-\tfrac{P_n}{Q_n}A_{n-1})B_{n-1}-(\tfrac{A_{n-1}}{Q_n}-\tfrac{P_n}{Q_n}B_{n-1})A_{n-1}\\
+&= \frac{kNB_{n-1}^2}{Q_n} - \frac{A_{n-1}^2}{Q_n}\\
+&= (-1)^{n-1}
+\end{align*}
+D'où le résultat.\\
+\end{proof}
+Ainsi, on obtient l'égalité modulaire :
+\[A_{n-1}^2 \equiv (-1)^nQ_n \pmod N\]
+Une telle paire $(A_{n-1}, Q_n)$ fera parti d'un ensemble qu'on appelle le preS-set. Le but est de trouver une ou des paires telles que leur produit forment un carré, i.e. de sorte qu'on ait :
+\[A^2 \equiv \prod_i{A_{i-1}^2} \equiv \prod_i{(-1)^iQ_i} \equiv Q^2 \pmod N\]
+avec $1 \leq A < N$. Les paires $(A, Q)$ forment un ensemble qu'on appelera S-set. Parmis cet ensemble, on cherche alors les paires telles que $A \neq Q \bmod N$; alors le $\textup{pgcd}(A - Q, N)$ fournira un facteur non trivial s'il est différent de $1$.
+
+
+\subsection{Description de l'algorithme}
+
+Le but est de factoriser un entier $N$ dans le cadre du protocol RSA, donc $N = pq$ avec $p$ et $q$ deux premiers impairs distincts.
+\subsubsection{Étape A}
+
+L'étape A consiste principalement à développer, pour $k\geq1$, le développement en fraction continue de $kN$ jusqu'à un certain rang $n_0$ au moyen des formules suivantes :
+\begin{align}
+&g + P_n = q_nQ_n + r_n\\
+&A_n \equiv q_nA_{n-1} + A_{n-2} \pmod{N}\\
+&g + P_{n+1} = 2g -r_n\\
+&Q_{n+1} = Q_{n-1} + q(r_n - r_{n-1})
+\end{align}
+Avec $A_2 = 0$, $A_{-1} = 1$, $Q_{-1} = kN$, $r_{-1} = g$, $P_0 = 0$, $Q_0 = 1$ et $g = \lfloor\sqrt{kN}\rfloor$.\\
+\begin{rem}
+Grâce au corollaire 1 du théorème \ref{ncycl}, on a une borne pour $Q_n$ qui est $2\sqrt{kN}$. Ainsi, on peut tester à la fin de l'étape si l'un des $Q_n$ dépasse cette borne.\par
+L'entier $k$ sert principalement à augmenter la taille d'une période, le but étant d'obtenir de plus $Q_n$ pour l'étape suivante.
+\end{rem}
+\subsubsection{Étape B}
+
+L'étape B est le moment où l'on cherche à déterminer quels produits de $Q_n$ forment un carrée. Une bonne façon de faire les choses consiste à factoriser au préalable les $Q_n$ et de raisonner sur leur valuations $p-adique$ afin d'obtenir des entiers avec uniquement des puissances paires.\\\par
+Pour factoriser les $Q_n$, une méthode raisonnable consiste à se donner une base de factorisation dont les éléments ne sont pas plus grands qu'une certaine borne. Cette borne est nommée UpperBound dans le programme et est à déterminer manuellement selon le nombre qu'on souhaite factoriser.\par
+Malgré cette limitation, il se peut qu'il y ait encore trop d'éléments. Pour filtrer davantage les premiers à sélectionner, nous allons utiliser le théorème suivant :
+\begin{thm}
+Si dans le développement en fraction continue de $\sqrt{kN}$ un entier impair $p$ divise un $Q_n$ pour $n\geq1$, alors le symbole de Legendre $\big(\tfrac{kN}{p}\big)$ vaut 0 ou 1.
+\end{thm}
+\begin{proof}
+Supposons que $n\geq1$ et $p|Q_n$, alors l'équation \ref{eqalg} nous permet d'affirmer que $A_{n-1}^2 \equiv kNB_{n-1}^2 \bmod p$. Or d'après la proposition \ref{moinsunn}, $A_{n-1}$ et $B_{n-1}$ sont premiers entre eux, donc $p$ ne peut pas diviser $B_{n-1}$, i.e. il est inversible. D'où $(A_{n-1}/B_{n-1})^2 \equiv kN$.\\
+\end{proof}
+On ne prendra donc uniquement les $p$ tels que $kN$ soit un résidu quadratique modulo $p$. On prendra garde à vérifier si $p$ divise $N$ et à ce qu'il ne divise pas $k$ pour éviter d'éventuelles erreurs.\\\par
+
+Une fois la base déterminée, il faut alors récupérer les $Q_n$ dits B-friable (factorisable sur une base B). Pour procéder, on optera pour une recherche simple en divisant chaque $Q_n$ par les $p$ successifs et en vérifiant si effectivement ils se factorisent complètement sur la base.\par
+Pendant qu'on recherche les dits $Q_n$, on en profite pour stocker leur valuation p-adique modulo $2$. Le principe est le suivant, on utilise un vecteur de $\mathbb{F}_2$ pour stocker la parité de l'indice et la parité des valuations p-adique du $Q_n$. On utilise pour vecteur un entier mpz de GMP en mettant le $i^{\textup{ième}}$ bit à $1$ ou $0$ selon sa parité. Dans le même temps, on génère d'autre vecteurs "historiques" qui permettront de garder en mémoire la position des $Q_n$ afin de pouvoir les retrouver plus tard.\par
+De façons plus formelle, à chaque $Q_n$ on associe un vecteur \[e_n = (a_0,a_1,\dots,a_r)\in\mathbb{F}_2^{r+1}\] où $a_0 = 1$ si $n$ est impair, $a_i = v_{p_i}(Q_n) \bmod 2$, pour $i\in\lbrace1,\dots,r\rbrace$ et $r$ est le cardinal de la base de factorisation. À chaque $e_n$ on associe alors le vecteur historique $h_n = (b_1,\dots,b_f)$ avec $b_j = \delta_n(j)$, i.e. indique la position de $Q_n$ parmis les $f$ termes factorisables.\\\par
+
+La prochaine étape consiste alors à trouver des produits qui forment un carré. Pour ce faire, il suffit de considérer la matrice formée des lignes $e_n$ et de lui appliquer la réduction de Gauss en appliquant aux $h_n$ les même modifications. L'article \cite[Section 2, step B]{AMFF} sur lequel est basé ce programme conseille d'appliquer une réduction de Gauss "à l'envers", c'est donc ce que nous allons faire. Voici la procédure :\\
+\begin{enumerate}
+\item On pose $j$ = $r$.
+\item On cherche le pivot, i.e. le vecteur $e_i$ tel que $i$ soit le plus petit possible et que sa $j^{\textup{ième}}$ composante vaille $1$.
+\item{
+	\begin{enumerate}
+	\item Pour $i< m \leq f$, on remplace les vecteurs $e_m$ pour lesquels la $j^{\textup{ième}}$ composante vaut $1$ par $e_i + e_m$ dans $\mathbb{F}_2^{r+1}$; en pratique, il suffit de faire un \textit{xor}.
+	\item À chaque fois qu'un $e_m$ est remplacé, il faut aussi effectuer $h_m \leftarrow h_i + h_m$ dans $\mathbb{F}_2^f$.
+	\end{enumerate}}
+\item On réduit $j$ de $1$; si $j \geq 0$ alors on retourne à l'étape 2, sinon on s'arrête.\\
+\end{enumerate}
+On obtient alors de nouveaux vecteurs $e_s$. Si aucun n'est nul, alors il faut retourner à l'étape A pour développer la fraction de $\sqrt{kN}$ jusqu'à un rang plus élevés. Sinon, les $e_s$ représentent les $(A, Q)$ qui forment le S-set.
+\subsubsection{Étape C}
+Il ne reste alors plus qu'à calculer le pgcd de $A-Q$ et $N$ pour espérer trouver un facteur. Pour se faire, nous allons d'abord devoir retrouver $A$ et $Q$ eux-mêmes.\par
+Pour le moment, nous n'avons que les $A_{n-1}^2$ et le produit $Q^2$ des $(-1)^nQ_n$. Retrouver les $A_{n-1}$ ne posent pas de réels problèmes puisqu'ils sont déjà réduits modulo $N$. Il suffit donc de les retrouver grâce aux vecteurs historiques $h_i$, de les multiplier en conséquence et de les réduire modulo $N$.\\\par
+Le problème est plus délicat pour retrouver $Q$. On pourrait très bien multiplier les $Q_n$ concernés à nouveau grâce aux vecteurs $h_i$, prendre la racine carrée et enfin réduire modulo $N$. Cependant, comme il est très justement précisé dans \cite[Section 2, step C]{AMFF}, cela ne fait pas grand usage des règles de calculs modulo $N$.\par
+Voici alors une procédure qui permet de calculer la racine carrée cherchée de manière plus rapide. D'abord il faut récupérer les $Q_n$ concernés grâce aux $h_i$, on les notera $Q_1$, $Q_2$,\dots, $Q_s$ avec $s\geq2$. Les lettres $I$, $\bar{Q}$, $R$ et $X$ sont des variables (représentants des entiers). On alors l'algorithme suivant :
+
+\begin{center}\textit{Square Root Procedure}\end{center}
+\begin{multicols}{2}
+\begin{enumerate}[(i)]
+\item $2\longrightarrow I$, $1\longrightarrow \bar{Q}$, $Q_1 \longrightarrow R$
+\item $\textup{pgcd}(R, Q_I) \longrightarrow X$
+\item $X\bar{Q}\pmod{N}\longrightarrow \bar{Q}$
+\item $(R/X)(Q_I/X)\longrightarrow R$
+\item $I + 1 \longrightarrow I$
+\item Si $I\leq s$ retourner à l'étape (ii)
+\item $\sqrt{R}\longrightarrow X$
+\item $X\bar{Q}\bmod{N}\longrightarrow \bar{Q}$
+\end{enumerate}
+\end{multicols}
+On se retrouve donc avec les $A$ et $Q \bmod N = \bar{Q}$ désirés. Il se présente alors trois situations possibles. La première est $A \equiv Q \bmod N$, auquel cas nous ne pouvons rien en faire. La seconde situation nous présente un $A$ différent de $Q$ modulo $N$, cependant on trouve que $\textup{pgcd}(A - Q, N) = 1$, la paire est donc inutilisable. La troisième et dernière situation représente le cas idéal : $A$ et différent de $Q$ modulo $N$ et le pgcd de $A - Q$ et $N$ fournit un facteur non triviale.\par
+Dans ce dernier cas, nous avons gagné. Il suffit alors simplement de diviser $N$ par ce facteur et nous avons trouvé les deux facteurs comme il était demandé. Si jamais aucunes des paires $(A, Q)$ ne fournit de facteur, il faut alors retourner à l'étape A et augmenter le rang et la borne UpperBound pour la base de factorisation.
+\section{Implémentation}
+\subsection{Structure du programme}
+Le programme se compile au moyen des commandes \textit{gcc -c source/*.c -std=c99} et \textit{gcc -O exec *.o -lgmp} dans la racine du dossier projet. L'exécutable prend en argument $N, k$, upperbound, rang, uplevel, où $N$ est l'entier à factoriser, $k$ est un unsigned int, upperbound est un entier, rang est un entier et uplevel un entier; il s'exécute de la façon suivante :  \textit{./exec N k upperbound rang uplevel}\par
+Le programme consiste en une grande boucle qui prend en argument les paramètres décrits ci-dessous. Elle effectue alors l'algorithme décrit dans la section précédente et le répète autant de fois que nécessaire pour trouver un facteur de $N$. À chaque étape, on augmente alors le rang et la borne pour la base de factorisation afin d'avoir plus de chance de trouver un facteur.
+\subsection{Fonctions particulières}
+\subsubsection{gen\_primeBase}
+La fonction sert à déterminer la base de factorisation primebase. Elle prend en argument $k, N$ et UpperBound. On commence par récupérer les premiers dans le fichier primelist.txt jusqu'à la borne UpperBound. On sélectionne alors uniquement les premiers en testant leur symbole de Legendre pour $kN$; il faut veiller à ce que $p$ ne divise pas $k$ sinon le test de savoir si $p$ divise $N$ sera faussé; le programme s'arrêterait alors et donnerait un mauvais facteur. La fonction retourne un élément de type \textit{base} qui contient le tableau des premiers sélectionnés et la taille de ce tableau. Renvoie une taille de $-1$ si un facteur divise $N$.
+\subsubsection{expand}
+La fonction consiste à développer $\sqrt{kN}$ jusqu'au rang donné grâce aux calculs fournies dans la section 3.2.1. Les seuls points particuliers sont la gestion des indices en tenant compte des décalages qui entrent en compte dans l'algorithme. On fini alors par un test sur les $Q_n$ pour vérifier qu'il n'y ait pas d'erreur. Ce test semblerait facultatif, mais il ne coûte pas énormément. La fonction retourne les éléments décrits dans la section 3.2.1 plus le rang.
+\subsubsection{factQ}
+Le but de cette fonction est de déterminer les $Q_n$ qui sont complètement factorisables sur primebase. On commence par diviser successivement chaque $Q_n$ par un $p_i$ en stockant le nombre division effectuées, ceci pour chaque $p_i$. Puis on remultiplie les $p_i$ avec les exposants stockées et on vérifie si le produit est égal à $Q_n$. Si c'est le cas, alors on rajoute $Q_n$ au tableau de ceux qui seront retenus et on en profite pour remplir les vecteurs $e_n$ décrit dans la section 3.2.2. On passe alors au $Q_n$ suivant.\par-
+Une fois la boucle effectuée, si des $Q_n$ ont été trouvé alors on rempli les vecteurs $h_i$ en mettant à $1$ le bit correspondant à la position du $Q_n$ dans les sélectionnés. La fonction renvoie un preS-set, consulter le fichier lib.h pour plus de détails; si aucun $Q_n$ n'est trouvé, on met le paramètre nb\_Q à $0$ ce qui influera la situation dans la fonction boucleFactorisation.
+\subsubsection{pairingSquare}
+Cette fonction applique uniquement la réduction de Gauss décrite dans la section 3.2.2. Elle renvoie le preS-set avec $Q$ et $h$ modifiés.
+\subsubsection{S\_set\_affect}
+On commence par essayer déterminer le nombre de facteurs $e_s$ égal au vecteur nul dans $\mathbb{F}_2^{r+1}$. S'il n'y en a aucun, on met le paramètre taille à $0$ et on gérera la situation dans la fonction boucleFactorisation (cf. le fichier lib.h pour plus de détails). S'il y en a, alors le but est d'effectuer le produit des $A[i]$ "=" $A_{i-1}$ en utilisant les indices stockés dans le tableau $h$. On stocke alors le résultat dans le tableau $As$ et on passe au calcul de $Q$ décrit dans l'algorithme. Pour cela, on commence par récupérer les $Q[i]$ concernés grâce aux indices stockés dans $h$, puis on applique la square root procedure et on stocke le résultat dans $Qs$. La fonction renvoie le S-set construit.
+\subsubsection{isFactored}
+Il s'agit de la fonction qui teste si on obtient effectivement un facteur ou non. Une fois récupéré le S-set, elle teste les différentes valeurs de $As$ et $Qs$ qui ont le même indice. Si les deux termes sont égaux, on passe à la paire suivante. Si on tombe sur un pgcd trivial, on passe à la paire suivante. Si on tombe sur un facteur non trivial, alors on arrête la boucle et on met l'entier passé en argument à la valeur du facteur, i.e. la valeur du pgcd. Si jamais aucun facteur n'est trouvé, on met l'entier à $-1$.
+\subsubsection{factorisation}
+C'est dans cette fonction qu'on génère la base de factorisation primebase. On vérifie alors si on a pas directement trouver un facteur de $N$ en la générant. Puis on utilise la fonction expand, si jamais les $Q_n$ sont erronés, alors on renvoie un "code" d'erreur. Sinon, on applique alors les fonctions pairingSquare et S\_set\_affect. Si jamais la taille du S-set est $0$ alors on renvoie le code signifiant qu'on a trouvé aucun S-set. Sinon, on applique la fonction isFactored comme écrite dans le programme. Si le facteur est égal à $-1$ alors on renvoie le code qui signifie qu'on a pas trouvé de S-set, sinon on renvoie le code qui signifie que tout s'est bien passé. La fonction renvoie un entier qui, comme décrit précédemment, permet de décider comment agir dans le programme.
+\subsubsection{boucleFactorisation}
+La fonction consiste en une grande boucle dont on sort uniquement lorsqu'on a finalement trouver un facteur. Puisqu'on augmente la taille de la base de factorisation au fur et à mesure, si on a un nombre de facteurs premiers suffisant, on finira toujours par "factoriser" $N$ même s'il est premier ou si la méthode "échoue"; le seul inconvénient sera la temp nécessaire afin d'arriver à ce fameux facter.\par
+Si aucun facteur n'est trouvé sur une boucle, alors on augmentera sans discernement le rang et UpperBound de la même valeur égale à uplevel. Une fois qu'un facteur est trouvé, on sort de la boucle en incrémentant un compteur qui sert de critère de réussite. Alors on peut diviser $N$ par le facteur trouvé pour obtenir le second.
+\subsection{Paramètres rang, UpperBound, uplevel et $k$}
+Le paramètre rang représente jusqu'à quel rang l'algorithme effectuera la fonction expand qui permet de développer en fraction continue $\sqrt{kN}$. Pour des raisons pratiques, il est plus prudent de la mettre au moins égal à UpperBound. Faute de quoi on s'expose à des erreurs de segmentation.\par
+Le paramètre UpperBound sert à déterminer jusqu'à quel borne la fonction gen\_primeBase va chercher les nombres premiers. Jusqu'à présent, mis à part utilisée des valeurs au hasard ou en utilisant une table fournit au préalable, il ne semble pas y avoir de procédé automatique pour décider de sa valeur. Il faudra donc l'entrer manuellement.\par
+Le paramètre uplevel sert dans la fonction bouclefactorisation pour augmenter la taille du rang et de upperbound. Encore une fois, il n'y a pas réellement de procédé automatique pour le déterminer. La seule chose raisonnable à faire semble de l'adapter proportionnellement aux paramètres rangs et upperbound afin d'éviter des calculs "inutiles". Cependant, des tests sur de "petits" nombres ont montré que s'il était trop élevé, il pouvait faire rater une "bonne" valeur du rang permettant une factorisation en moins d'étape.\par
+Le paramètre $k$ sert, comme décrit dans la section précédente, à élargir la période de la fraction continue de $\sqrt{kN}$. En pratique, modifier la valeur de $k$ a permis dans certaine situation à trouver des S-set quand il n'y en avait pas (en gardant la même rang); soit à trouver le facteur de $N$ en moins d'étape lorsqu'on faisait varier le rang. Là encore aucun procédé automatique, il faut faire les tests à la main.  
+\subsection{Problèmes connus}
+Le principal problème est évidemment le temps de calcul lorsqu'on considère des nombres entiers vraiment grand. Par exemple, la factorisation de $F_7 = 2^{2^7} + 1$ le septième nombre de Fermat a mis en échec le programme malgré plusieurs essaies. Les seules fois où je suis parvenu à une factorisation du nombre ce fût lorsque la borne UpperBound dépassait le premier facteur premier du dit nombre. On peut imaginer qu'avec un rang et une borne relativement proche du premier facteur égal à $274177$, $k = 257$ comme dans l'article et un temps disponible suffisamment important, on pourrait éventuellement utiliser un uplevel très petit par rapport au rang et à la borne et espérer trouver le facteur sans qu'il soit dans le base de factorisation.\par
+Sinon, il faudrait chercher à optimiser les parties de l'algorithme qui prennent le plus de temps. Celles qui viennent à l'esprit sont la factorisation des $Q_n$ et la partie algèbre linéaire qui permet de déterminer les produits qui fournissent un carré.\\\par
+Un autre problème est l'entrée d'un nombre qui soit un carré parfait dans le programme. Ceci résulte en une excéption en pointeur flottant. Bien entendu, les carrés parfait n'ont pas leur place dans le contexte RSA, mais on pourrait imaginer modifier le code afin de gérer ce cas particulier. Le problème se situant au moment de fabriquer la dite base de factorisation. Puisqu'on cherche à filtrer les nombres premiers selon si $kN$ est un résidu quadratique non, si $N$ est un carré et $k$ également, alors il se trouve que tous les premiers satisfont ce critère ce qui doit poser problème au niveau des allocations mémoire.\\\par
+Le dernier problème est celui soulevé dans la sous-section précédente, i.e. la détermination automatiques des paramètres en fonction de $N$ et $k$. Visiblement, il semblerait que l'expérimentation soit la voie la mieux indiquées. Une piste en étudiant la complexité de l'algorithme a été proposée, malheureusement une faible connaissance dans le domaine m'empêche d'explorer cette piste.
+\newpage
+\clearpage
+\addcontentsline{toc}{section}{Références}
+\begin{thebibliography}{LC}
+\bibitem{AMFF} \emph{A Method of Factoring and the Factorization of $F_7$}, \bsc{Micheal A. Morrison \& John Brillhart}, \textit{Mathematics of computation}, Vol. 29, No. 129 (Jan, 1975), pp. 183-105, URL : \url{http://www.jstor.org/stable/2005475}
+\bibitem{CF} \emph{Continued fractions and factoring}, \bsc{Niels Lauritzen}, Université de Arrhus, Danemark, Chap. 2, URL : \url{http://home.imf.au.dk/niels/cfracfact.pdf}
+\end{thebibliography}
+\end{document}
