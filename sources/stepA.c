@@ -1,17 +1,17 @@
 #include"../entetes/lib.h"
 
 //Le but de la fonction est de calculer le développement en fractions continue jusqu'à un certain rang de racine carrée de kN et de stocker les couples (A_n-1,Q_n) comme décrit dans la section (à venir)
-cfrac expand(const mpz_t N, unsigned int borne, const mpz_t k)
+cfrac expand(const mpz_t N, const long long unsigned int rang, const mpz_t k)
 {
 	cfrac res;	//Contient l'ensemble des A_n-1 et l'ensemble Q_n
 	mpz_inits(res.N, res.k, res.g, NULL);
 
 	//Initialisation des variables
-	mpz_t* A = (mpz_t*)malloc((borne+1)*sizeof(mpz_t));		//Le tableau contenant les A_n-1
-	mpz_t* Q = (mpz_t*)malloc((borne+2)*sizeof(mpz_t));		//Le tableau contenant les Q_n
-	mpz_t* P = (mpz_t*)malloc((borne+1)*sizeof(mpz_t));		//Éléments reliés au Q_n
-	mpz_t* r = (mpz_t*)malloc((borne+1)*sizeof(mpz_t));		//Interviennent dans le calcul des A_n-1 & Q_n
-	mpz_t* q = (mpz_t*)malloc(borne*sizeof(mpz_t));			//Idem
+	mpz_t* A = (mpz_t*)malloc((rang+1)*sizeof(mpz_t));		//Le tableau contenant les A_n-1
+	mpz_t* Q = (mpz_t*)malloc((rang+2)*sizeof(mpz_t));		//Le tableau contenant les Q_n
+	mpz_t* P = (mpz_t*)malloc((rang+1)*sizeof(mpz_t));		//Éléments reliés au Q_n
+	mpz_t* r = (mpz_t*)malloc((rang+1)*sizeof(mpz_t));		//Interviennent dans le calcul des A_n-1 & Q_n
+	mpz_t* q = (mpz_t*)malloc(rang*sizeof(mpz_t));			//Idem
 	mpz_t g, tempz;											//Idem, tempz = variable à tout faire	
 	mpf_t sqrtkN, tempf, tempf2;									//sqrtkN = sqrt(k*N), tempf = variable à tout faire
 
@@ -40,7 +40,7 @@ cfrac expand(const mpz_t N, unsigned int borne, const mpz_t k)
 	mpz_init_set_ui(Q[1], 1);			//Q_0 = Q[1]
 	mpz_init_set_ui(P[0], 0);			//P_0 = P[0]	
 
-	for(int i = 0; i < borne; i++)
+	for(long long int i = 0; i < rang; i++)
 	{
 		switch(i)
 		{
@@ -104,6 +104,26 @@ cfrac expand(const mpz_t N, unsigned int borne, const mpz_t k)
 
 	}
 
+	//Test de routine pour voir si le développement de la fraction continue s'est bien passé
+	mpz_t tempsqrt;
+	mpz_init(tempsqrt);
+	mpz_set(tempsqrt, k);
+	mpz_mul(tempsqrt, tempsqrt, N);
+	mpz_sqrt(tempsqrt, tempsqrt);
+	mpz_mul_ui(tempsqrt, tempsqrt, 2);
+
+	for(int i = 1; i < rang; i++)				//Éviter de commencer à i = 0 puisque cela représente Q_-1 qui n'intervient uniquement dans l'algo et non dans le développement en fraction continue
+	{
+		if(mpz_cmp(Q[i], tempsqrt) >= 0)	//Si Q_n >= 2sqrt(kN)
+		{
+			res.rang = 0;
+
+			mpz_clears(g, tempz, NULL);
+			mpf_clears(sqrtkN, tempf, tempf2, NULL);
+			return res;
+		}
+	}
+
 	//Assignation des tableaux dans le résultat
 	res.A = A;
 	res.Q = Q;
@@ -112,7 +132,7 @@ cfrac expand(const mpz_t N, unsigned int borne, const mpz_t k)
 	res.P = P;
 	mpz_set(res.N, N);
 	mpz_set(res.k, k);
-	res.borne = borne;
+	res.rang = rang;
 	mpz_set(res.g, g);
 
 	//Libération de mémoire

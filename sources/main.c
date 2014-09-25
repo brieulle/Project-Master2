@@ -2,47 +2,20 @@
 
 
 
-int main(int argc, char** argv)
+int main(int argc, char** argv)//argv[1] = N, argv[2] = k, argv[3] = upperbound, argv[4] = rang, argv[5] = uplevel
 {
-/*
-	mpz_t N, k;
+	long long int upperbound = atoll(argv[3]);	//Borne supérieur de la base de factorisation
+	long long int rang = atoll(argv[4]);		//Rang jusqu'auquel on développera la fraction continue
+	long long int uplevel = atoll(argv[5]);	//Entier par lequel on augementera la taille de du rang et de la borne pour la base de factorisation
+
+	mpz_t N, k;								//N entier à factoriser, k entier servant à "élargir" le développement de N en fraction continue
 	mpz_inits(N, k, NULL);
-	mpz_set_ui(k,1);
-	mpz_set_str(N, "13290059", 10);
 
-	cfrac frac;
-	
+	mpz_set_str(N,argv[1],10);
+	mpz_set_ui(k,atoi(argv[2]));
 
-	frac = expand(N, 4, k);
-	cfrac_display(frac);
+	boucleFactorisation(N, k, upperbound, rang, uplevel);
 
-*/
-	FILE* primes = fopen("Nombres premiers.txt", "r");
-/*
-	mpz_t z, y;
-	mpz_init_set_ui(z, 7);
-	mpz_init(y);
-	int a,b,c,d;
-	a = mpz_tstbit(z,0);
-	b = mpz_tstbit(z,1);
-	c = mpz_tstbit(z,2);
-	d = mpz_tstbit(z,3);
-	
-	printf("%d%d%d%d\n",d,c,b,a);
-	mp_bitcnt_t i = mpz_scan0(z, 1);
-	gmp_printf("%u\n",i);
-	gmp_printf("%Zd\n",y);
-*/
-	mpz_t N,k,a;
-	int upperbound = 50;	
-	base primebase;
-
-	mpz_init_set_ui(k,1);
-	mpz_init(N);
-	mpz_set_str(N, "132901", 10);
-	primebase = gen_primeBase(upperbound, N, k, primes);
-	base_display(primebase);
-
-	fclose(primes);
+	mpz_clears(N, k, NULL);
 	return 0;
 }
